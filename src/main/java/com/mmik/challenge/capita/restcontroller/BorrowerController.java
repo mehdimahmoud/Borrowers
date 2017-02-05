@@ -103,7 +103,7 @@ public class BorrowerController {
         Borrower bw = getBorrower(borrowerId);
         // Check before if the Borrower details are checked or not:
         if(bw.getChecked()!=Checked.T)
-            throw new IllegalAccessException("Can't update before checking some details of the Borrower  ["+borrowerId+"] ");
+            throw new IllegalAccessException("Can't update before checking some details of the Borrower ID ["+borrowerId+"] ");
         // As details are Checked (="T") then continue updating:
         bw.setBarCode(barCode);
         bw.setType(borrowerType);
