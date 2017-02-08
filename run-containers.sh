@@ -11,11 +11,6 @@ echo
 echo "---------- Clean project ----------"
 ./gradlew clean
 echo
-echo "---------- Build docker project ----------"
-./gradlew buildDocker -x test
-echo
-docker ps -a
-echo
 echo
 echo "---------- Run Mysql DB container : c_mysql_db_borrowers ----------"
 echo " Mysql DB Container name : c_mysql_db_borrowers "
@@ -24,6 +19,11 @@ echo "-------------------------------------------------------------------"
 docker run --name c_mysql_db_borrowers -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=mysql_db_borrowers -p 3306:3306 mysql:latest
 echo
 docker ps
+echo
+echo "---------- Build docker project by skipping test task ----------"
+./gradlew buildDocker -x test
+echo
+docker ps -a
 echo
 echo "---------- Run Spring Boot Borrowers services container ----------"
 echo " API Container name : c_bw-services "
