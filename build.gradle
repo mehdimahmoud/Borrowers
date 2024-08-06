@@ -1,65 +1,108 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+
 buildscript {
 	ext {
-		springBootVersion = '1.4.4.RELEASE'
+		springBootVersion = '3.0.0'
 	}
 	repositories {
 		mavenCentral()
+		maven { url 'https://repo.spring.io/milestone' }
+		maven { url 'https://repo.spring.io/snapshot' }
+		gradlePluginPortal()
 	}
 	dependencies {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-		classpath("se.transmode.gradle:gradle-docker:1.2")
+		//classpath("se.transmode.gradle:gradle-docker:1.2")
 	}
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'docker'
-
-jar {
-	baseName = 'borrowers-services'
-	version = '0.0.1'
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version "${springBootVersion}"
+	id 'io.spring.dependency-management' version '1.1.0'
+	id 'com.bmuschko.docker-spring-boot-application' version '9.4.0'
+	//id 'com.bmuschko.docker-remote-api' version '9.3.1'
+	//id 'com.palantir.docker' version '0.35.0'
+	// Eclipse plugin is optional, uncomment if needed
+	// id 'eclipse'
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+group = 'com.mmik'
+version = '1.0.0-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+	withJavadocJar()
+	withSourcesJar()
+
+	tasks.withType(JavaCompile).tap {
+		configureEach {
+			options.compilerArgs += [
+					'-Xlint:deprecation',
+					'-Xlint:unchecked',
+					'-Xlint:fallthrough'
+			]
+		}
+	}
+}
 
 repositories {
 	mavenCentral()
 }
 
+ext {
+	set('springdocVersion', "2.1.0")
+}
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter-actuator')
-	compile('org.springframework.boot:spring-boot-starter-data-jpa')
-	compile('org.springframework.boot:spring-boot-starter-data-rest')
-//	compile('org.springframework.boot:spring-boot-starter-security')
-	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('io.springfox:springfox-swagger-ui:2.6.1')
-	compile('io.springfox:springfox-swagger2:2.6.1')
-	compile('org.flywaydb:flyway-core:4.0.3')
+	implementation "org.springframework.boot:spring-boot-starter-actuator"
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+	implementation "org.springframework.boot:spring-boot-starter-data-rest"
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+	implementation 'org.flywaydb:flyway-core:9.16.0' // 10.15.2 or 8.5.13
+	implementation 'org.flywaydb:flyway-mysql:9.16.0'
+	implementation 'com.mysql:mysql-connector-j:9.0.0'
+//	implementation 'mysql:mysql-connector-java:8.0.33'
 
-	compile('mysql:mysql-connector-java')
-
-	testCompile('org.springframework.boot:spring-boot-starter-test')
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation('org.junit.jupiter:junit-jupiter-api:5.9.0')
+	testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.9.0')
 }
 
-task wrapper (type: Wrapper) {
-	gradleVersion =  '3.3'
+tasks.named('test') {
+	useJUnitPlatform()
 }
 
+// Configure the JAR task
+tasks.named('jar') {
+	archiveBaseName.set("${project.name.toLowerCase()}")
+	archiveVersion.set("${project.version}")
+}
 
+// Docker task definition
+def dockerRegistry = 'mehdimik'
+tasks.register('docker', DockerBuildImage) {
+	dependsOn tasks.named('bootJar')
+	inputDir.set(project.file('src/main/docker'))
+	dockerFile.set(project.file('src/main/docker/Dockerfile'))
+	images.add("${dockerRegistry}/${project.name.toLowerCase()}:${project.version}")
+	buildArgs.put('JAR_FILE', "${project.name.toLowerCase()}.${project.version}.jar")
+}
 
-group = 'mmik'
+tasks.named('docker') {
+	dependsOn tasks.named('copyJarToDockerfile')
+}
 
-task buildDocker (type: Docker, dependsOn: build){
-	push = false
-	applicationName = jar.baseName
-	dockerfile = file('src/main/docker/Dockerfile')
-	doFirst{
-		copy{
-			from jar
-			into stageDir
-		}
+tasks.register('copyJarToDockerfile', Copy) {
+	dependsOn tasks.named('bootJar')
+	from tasks.named('bootJar')
+	into project.file('src/main/docker')
+	rename { String fileName ->
+		"${project.name.toLowerCase()}.${project.version}.jar"
 	}
 }
+
+

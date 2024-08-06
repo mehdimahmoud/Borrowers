@@ -1,15 +1,16 @@
 package com.mmik.challenge.capita;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class BorrowersApplicationTests {
 
@@ -22,8 +23,9 @@ public class BorrowersApplicationTests {
 
 	@Test
 	public void testInitMigrationSettings() throws Exception {
-		assertThat(this.template.queryForObject("SELECT COUNT(*) from BORROWERS",
-				Integer.class)).isEqualTo(3);
+		int count = this.template.queryForObject("select count(*) from borrower",
+				Integer.class);
+		assertEquals(count, 3);
 	}
 
 }

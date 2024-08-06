@@ -12,30 +12,30 @@ echo "---------- Clean project ----------"
 ./gradlew clean
 echo
 echo
-echo "---------- Run Mysql DB container : c_mysql_db_borrowers ----------"
-echo " Mysql DB Container name : c_mysql_db_borrowers "
-echo " Expose 3306 : port of the DB availability "
-echo "-------------------------------------------------------------------"
-docker run --name c_mysql_db_borrowers -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=mysql_db_borrowers -p 3306:3306 mysql:latest
+echo "---------- Run Mysql DB container : c_bw_db ----------"
+echo " Mysql DB Container name : c_bw_db                    "
+echo " Expose 3306 : port of the DB availability            "
+echo "------------------------------------------------------"
+docker run --name c_bw_db -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=mysql_db_borrowers -p 3306:3306 mysql:latest
 echo
-docker ps
+docker ps | grep c_bw*
 echo
 echo "---------- Build docker project by skipping test task ----------"
-./gradlew buildDocker -x test
+./gradlew docker
 echo
-docker ps -a
+docker ps -a | grep c_bw*
 echo
 echo "---------- Run Spring Boot Borrowers services container ----------"
-echo " API Container name : c_bw-services "
+echo " API Container name : c_bw_services "
 echo " Expose 8090 : port of the API availability"
 echo " Expose 8091 : port for the WS client swagger-ui.html "
 echo "------------------------------------------------------------------"
-docker run --name c_bw-services -d -p 8090:8090 -p 8091:8091 mmik/borrowers-services:latest
+docker run --name c_bw_services -d -p 8090:8090 -p 8091:8091 mehdimik/borrowers:1.0.0-SNAPSHOT
 echo
 echo
-docker ps -a
+docker ps -a | grep c_bw*
 echo
 echo
-docker ps
+docker ps | grep c_bw*
 echo
 echo

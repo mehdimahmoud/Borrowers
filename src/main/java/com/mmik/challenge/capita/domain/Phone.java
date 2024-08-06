@@ -2,7 +2,7 @@ package com.mmik.challenge.capita.domain;
 
 import com.mmik.challenge.capita.domain.enumtype.PhoneType;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 /**
