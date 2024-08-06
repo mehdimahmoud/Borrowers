@@ -1,10 +1,17 @@
-FROM java:8
+FROM amazoncorretto:17
 MAINTAINER mehdi.mahmoud@gmail.com
+ARG JAR_FILE
 EXPOSE 8090
 EXPOSE 8091
-RUN mkdir -p /microservices
-RUN groupadd -r gUser -g 433 && useradd -u 431 -r -g gUser -d /microservices -s /sbin/nologin -c "Borrowers microservices" swuser && chown -R swuser:gUser /microservices
-ADD borrowers-services-0.0.1.jar app.jar
-#ENTRYPOINT ["java","-jar","/app.jar"]
-RUN bash -c 'touch /app.jar'
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+RUN mkdir -p /app
+ADD ${JAR_FILE} /app/app.jar
+# Make sure the JAR file is accessible and set permissions
+RUN chmod 755 /app/app.jar
+# Copy the entry point script. Remove "src/main/docker/" if image is created from gradle docker task
+COPY src/main/docker/entrypoint.sh /app/entrypoint.sh
+# Ensure the entry point script is executable
+RUN chmod +x /app/entrypoint.sh
+# Set the working directory
+WORKDIR /app
+# Set the entry point to the script
+ENTRYPOINT ["./entrypoint.sh"]

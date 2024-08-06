@@ -1,0 +1,58 @@
+version: '3.3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile
+      args:
+        JAR_FILE: build/libs/${PROJECT_NAME}-${DOCKER_IMAGE_TAG}.jar
+    image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+    container_name: c_bw_services
+    ports:
+      - "8090:8090"
+      - "8091:8091"
+    volumes:
+      - ./logs:/app/logs  # Map the logs directory inside the container to a directory on the host
+    depends_on:
+      - db
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      LOG_RESET: "true"  # Set to "false" or remove in environments where log clearing is not needed
+      SERVER_PORT: 8090
+      MANAGEMENT_SERVER_PORT: 8091
+      SPRING_DATASOURCE_URL: jdbc:mysql://c_bw_db:3306/mysql_db_borrowers?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"  # Note: boolean values should be quoted
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
+      SPRING_FLYWAY_ENABLED: "true"  # Note: boolean values should be quoted
+      SPRING_FLYWAY_LOCATIONS: classpath:/db/migration
+      LOGGING_LEVEL_ORG_FLYWAYDB: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JDBC: DEBUG
+      LOGGING_LEVEL_COM_ZAXXER_HIKARI: DEBUG
+      SPRINGDOC_PATHS_TO_MATCH: /api/borrowers/**
+      SPRINGDOC_API_DOCS_PATH: /api-docs
+      SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
+    networks:
+      - borrowers_network
+
+  db:
+    image: mysql:9.0.0
+    container_name: c_bw_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=mysql_db_borrowers
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - borrowers_network
+
+networks:
+  borrowers_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

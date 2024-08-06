@@ -4,21 +4,30 @@ server:
 
 # management endpoints on an other port
 management:
-  port: 8091
-  security:
-    enabled: false
+  server:
+    port: 8091
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 
 logging:
-  log: logs/borrowers-services.log
+  file:
+    name: logs/borrowers-services.log
+  level:
+    org.springframework.jdbc.core: DEBUG
+    com.zaxxer.hikari: DEBUG
+    org.flywaydb: DEBUG
+    org.hibernate: DEBUG
 
 spring:
   profiles:
     active: development
   datasource:
-    url: jdbc:mysql://192.168.99.100:3306/mysql_db_borrowers
+    url: jdbc:mysql://localhost:3306/mysql_db_borrowers
     username: root
     password: root
-    driverClassName: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     testOnBorrow: true
     testWhileIdle: true # Keep the connection alive if idle for a long time (needed in production)
     validationQuery: SELECT 1
@@ -26,9 +35,25 @@ spring:
     show-sql: true
     generate-ddl: false
     hibernate:
-      dll-auto: validate
+      dll-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        id:
+          new_generator_mappings: false
+          use-new-id-generator-mappings: false
+  # management database migration
+  flyway:
+    check-location: true
+    locations: classpath:/db/migration
 
-# management database migration
-flyway:
-  check-location: true
-  locations: classpath:/db/migration
+
+# Add SpringDoc configuration here
+springdoc:
+  package-to-scan: com.mmik.challenge.capita.*
+  paths-to-match: /api/borrowers/**
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
