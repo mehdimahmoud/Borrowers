@@ -3,18 +3,16 @@ package com.mmik.challenge.capita.restcontroller;
 import com.mmik.challenge.capita.domain.Borrower;
 import com.mmik.challenge.capita.domain.enumtype.Checked;
 import com.mmik.challenge.capita.repository.BorrowerRepository;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,7 +25,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
  * Created by mmik on 29/01/2017.
  */
 @RestController
-@RequestMapping("/borrower")
+@RequestMapping("/api/borrowers")
 public class BorrowerController {
 
     static Logger log = LoggerFactory.getLogger(BorrowerController.class);
@@ -38,32 +36,33 @@ public class BorrowerController {
     @PersistenceContext
     private EntityManager em;
 
-    @ApiOperation(value = "sayHello", nickname = "sayHello")
+/*    @Operation(summary = "sayHello", description = "Returns a greeting message")
     @RequestMapping(value = "/",method = GET)
     public String sayHello(){
         return "Hello, you are at our Borrowers services API.";
-    }
+    }*/
 
-    @ApiOperation(value = "getAllBorrowers", nickname = "getAllBorrowers")
-    @RequestMapping(value = "/all", method = GET)
+    @Operation(summary = "getAllBorrowers", description = "getAllBorrowers")
+    @RequestMapping(value = "/", method = GET)
     public List<Borrower> getAllBorrowers() {
-        Stream<Borrower> sBw = borrowerRepository.findAll();
-        return sBw.collect(Collectors.toList());
+        return borrowerRepository.findAll();
     }
 
-    @ApiOperation(value = "getBorrower", nickname = "Get Borrower")
+    @Operation(summary = "getBorrower", description = "Get Borrower")
     @RequestMapping(value = "/{borrowerId}", method = GET)
+    @ResponseStatus(HttpStatus.OK)
     public Borrower getBorrower(@PathVariable String borrowerId) {
-        Optional<Borrower> oBw = borrowerRepository.findOne(Long.valueOf(borrowerId));
+        Optional<Borrower> oBw = borrowerRepository.findById(Long.valueOf(borrowerId));
         if(oBw.isPresent())
             return oBw.get();
         else {
-            throw new IllegalArgumentException("There can't be found the searched borrower, due to Id is null or doesn't exist.");
+            throw new IllegalArgumentException("There can't be found the searched borrower, due to borrowerId is null or doesn't exist.");
         }
     }
 
-    @ApiOperation(value = "searchBorrower", nickname = "Search Borrower via criteria")
+    @Operation(summary = "searchBorrower", description = "Search Borrower via criteria")
     @RequestMapping(value = "/search", method = GET)
+    @ResponseStatus(HttpStatus.OK)
     public Borrower searchBorrower(@RequestParam String fullName) {
         Optional<Borrower> oBw = borrowerRepository.findByFullNameContaining(fullName);
         if(oBw.isPresent())
@@ -73,8 +72,9 @@ public class BorrowerController {
         }
     }
 
-    @ApiOperation(value = "addBorrower", nickname = "Registers new Borrower")
-    @RequestMapping(value = "/register/", method = POST)
+    @Operation(summary = "addBorrower", description = "Registers new Borrower")
+    @PostMapping(value = "/register")
+    @ResponseStatus(HttpStatus.CREATED)
     public Borrower addBorrower(Borrower borrower) {
         Optional<Borrower> oBw = borrowerRepository.save(borrower);
         if(oBw.isPresent()) {
@@ -84,8 +84,9 @@ public class BorrowerController {
         }
     }
 
-    @ApiOperation(value = "checkedBorrower", nickname = "Validates some details of Borrower")
-    @RequestMapping(value = "/validate/{borrowerId}", method = PUT)
+    @Operation(summary = "checkedBorrower", description = "Validates some details of Borrower after a verify")
+    @PutMapping(value = "/validate/{borrowerId}")
+    @ResponseStatus(HttpStatus.OK)
     public Borrower checkedBorrower(@PathVariable String borrowerId) {
         Borrower bw = getBorrower(borrowerId);
         bw.setChecked(Checked.T);
@@ -97,8 +98,8 @@ public class BorrowerController {
         }
     }
 
-    @ApiOperation(value = "updateBorrower", nickname = "Updates some details of Borrower")
-    @RequestMapping(value = "/update/{borrowerId}", method = PUT)
+    @Operation(summary = "updateBorrower", description = "Updates some details of Borrower")
+    @PutMapping(value = "/{borrowerId}")
     public Borrower updateBorrower(@PathVariable String borrowerId, String barCode, String borrowerType) throws IllegalAccessException {
         Borrower bw = getBorrower(borrowerId);
         // Check before if the Borrower details are checked or not:
@@ -115,14 +116,16 @@ public class BorrowerController {
         }
     }
 
-    @ApiOperation(value = "deleteBorrower", nickname = "Deletes Borrower")
-    @RequestMapping(value = "/delete/{borrowerId}", method = PUT)
+    @Operation(summary = "deleteBorrower", description = "Deletes a Borrower")
+    @DeleteMapping(value = "/{borrowerId}")
+    @ResponseStatus(HttpStatus.OK)
     public String deleteBorrower(@PathVariable String borrowerId) {
         try {
-            if(StringUtils.isEmpty(borrowerId))
+            if(!StringUtils.hasText(borrowerId)) {
                 throw new IllegalArgumentException("Borrower can't be deleted, due to ID is null.");
+            }
 
-            borrowerRepository.delete(Long.valueOf(borrowerId));
+            borrowerRepository.deleteById(Long.valueOf(borrowerId));
             return new StringBuilder("Borrower ID [")
                     .append(borrowerId)
                     .append("]")

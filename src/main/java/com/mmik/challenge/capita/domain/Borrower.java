@@ -2,9 +2,9 @@ package com.mmik.challenge.capita.domain;
 
 import com.mmik.challenge.capita.domain.enumtype.Checked;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.Set;
 
 /**
  * Created by mmik on 29/01/2017.
@@ -13,10 +13,12 @@ import java.util.Set;
 @Table(name = "borrower")
 public class Borrower implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "borrower_seq")
+    @SequenceGenerator(name = "borrower_seq", sequenceName = "borrower_seq")
     private long id;
 
     @Column(name = "memberid")
